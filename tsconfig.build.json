@@ -1,0 +1,29 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "ESNext",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true
+  },
+  "include": [
+    "src/index.node.ts",
+    "src/index.web.ts",
+    "src/types/**/*",
+    "src/commands/**/*",
+    "src/helper/**/*"
+  ],
+  "exclude": [
+    "src/index.ts",
+    "src/index.ts.old",
+    "src/main.ts",
+    "src/examples.ts",
+    "src/helper/rendering/render.ts",
+    "src/**/*.test.ts",
+    "src/**/__snapshots__",
+    "node_modules",
+    "dist"
+  ]
+}

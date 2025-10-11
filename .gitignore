@@ -1,0 +1,50 @@
+# Dependencies
+node_modules
+
+# Build output
+dist
+
+# TypeScript
+*.tsbuildinfo
+
+# Test output
+coverage
+.nyc_output
+
+# Generated files
+*.png
+*.pdf
+*.svg
+!examples/**/*.png
+!examples/**/*.pdf
+!examples/**/*.svg
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+.cache
+src/experiments.ts

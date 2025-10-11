@@ -1,0 +1,67 @@
+import { Canvas } from "skia-canvas";
+import { Command } from "./commands/index";
+import { parse as parseZPL } from "./helper/labelParsing/parse";
+import { render as renderInternal } from "./helper/rendering/render-node";
+
+// Re-export parse
+export { parse } from "./helper/labelParsing/parse";
+
+/**
+ * Render ZPL commands to a canvas using Node.js (skia-canvas)
+ *
+ * @param commands - Array of parsed ZPL commands from the parse() function
+ * @param width - Width of the canvas in pixels
+ * @param height - Height of the canvas in pixels
+ * @returns Promise resolving to the rendered Canvas
+ *
+ * @example
+ * import { parse, render } from "zplr/node";
+ *
+ * const commands = parse("^XA^FO100,100^FDHello^FS^XZ");
+ * const canvas = await render(commands[0], 400, 600);
+ *
+ * // Save to file (skia-canvas specific feature)
+ * await canvas.saveAs("output.png");
+ */
+export async function render(
+  commands: Command[],
+  width: number,
+  height: number
+): Promise<Canvas> {
+  return renderInternal(commands, width, height);
+}
+
+/**
+ * Convenience function to parse and render ZPL in one call
+ *
+ * @param zpl - ZPL string to parse and render
+ * @param width - Width of the canvas in pixels
+ * @param height - Height of the canvas in pixels
+ * @returns Promise resolving to array of Canvas instances (one per label)
+ *
+ * @example
+ * import { parseAndRender } from "zplr/node";
+ *
+ * const canvases = await parseAndRender("^XA^FO100,100^FDHello^FS^XZ", 400, 600);
+ * await canvases[0].saveAs("label.png");
+ */
+export async function parseAndRender(
+  zpl: string,
+  width: number,
+  height: number
+): Promise<Canvas[]> {
+  const labels = parseZPL(zpl);
+  const canvases: Canvas[] = [];
+
+  for (const commands of labels) {
+    const canvas = await render(commands, width, height);
+    canvases.push(canvas);
+  }
+
+  return canvases;
+}
+
+// Export types
+export type { CommandClass } from "./types/CommandClass";
+export type { Orientation } from "./types/Orientation";
+export type { RenderContext } from "./types/RenderContext";

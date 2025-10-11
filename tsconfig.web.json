@@ -1,0 +1,34 @@
+{
+  "include": ["env.d.ts", "web/**/*", "src/**/*", "vite.config.ts"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "src/main.ts",
+    "src/examples.ts",
+    "src/index.ts.old",
+    "src/index.node.ts",
+    "src/helper/rendering/render.ts",
+    "src/helper/rendering/render.node.ts",
+    "src/**/*.test.ts"
+  ],
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": false,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "preserve",
+    "jsxImportSource": "vue",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  }
+}
