@@ -72,7 +72,7 @@ export async function parseAndRender(
  * import { parseAndRenderPNG } from "zplr/web";
  *
  * const pngDataUrls = await parseAndRenderPNG("^XA^FO100,100^FDHello^FS^XZ", 400, 600);
- * 
+ *
  * // Use in an img tag
  * const img = document.createElement('img');
  * img.src = pngDataUrls[0];
@@ -84,7 +84,7 @@ export async function parseAndRenderPNG(
   height: number
 ): Promise<string[]> {
   const canvases = await parseAndRender(zpl, width, height);
-  return canvases.map(canvas => canvas.toDataURL("image/png"));
+  return canvases.map((canvas) => canvas.toDataURL("image/png"));
 }
 
 // Export types

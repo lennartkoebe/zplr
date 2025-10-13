@@ -83,12 +83,12 @@ export async function parseAndRenderPNG(
 ): Promise<Buffer[]> {
   const canvases = await parseAndRender(zpl, width, height);
   const buffers: Buffer[] = [];
-  
+
   for (const canvas of canvases) {
     const buffer = await canvas.toBuffer("png");
     buffers.push(buffer);
   }
-  
+
   return buffers;
 }
 
