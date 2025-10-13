@@ -39,8 +39,8 @@
     "renderer",
     "canvas"
   ],
-  "author": "",
-  "license": "ISC",
+  "author": "Lennart Kurth",
+  "license": "MIT",
   "devDependencies": {
     "@types/node": "^22.10.1",
     "@types/svgdom": "^0.1.2",
