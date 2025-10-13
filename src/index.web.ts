@@ -60,6 +60,33 @@ export async function parseAndRender(
   return canvases;
 }
 
+/**
+ * Convenience function to parse, render, and export ZPL as PNG data URLs
+ *
+ * @param zpl - ZPL string to parse and render
+ * @param width - Width of the canvas in pixels
+ * @param height - Height of the canvas in pixels
+ * @returns Promise resolving to array of PNG data URLs (one per label)
+ *
+ * @example
+ * import { parseAndRenderPNG } from "zplr/web";
+ *
+ * const pngDataUrls = await parseAndRenderPNG("^XA^FO100,100^FDHello^FS^XZ", 400, 600);
+ * 
+ * // Use in an img tag
+ * const img = document.createElement('img');
+ * img.src = pngDataUrls[0];
+ * document.body.appendChild(img);
+ */
+export async function parseAndRenderPNG(
+  zpl: string,
+  width: number,
+  height: number
+): Promise<string[]> {
+  const canvases = await parseAndRender(zpl, width, height);
+  return canvases.map(canvas => canvas.toDataURL("image/png"));
+}
+
 // Export types
 export type { CommandClass } from "./types/CommandClass";
 export type { Orientation } from "./types/Orientation";

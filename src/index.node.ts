@@ -61,6 +61,37 @@ export async function parseAndRender(
   return canvases;
 }
 
+/**
+ * Convenience function to parse, render, and export ZPL as PNG buffers
+ *
+ * @param zpl - ZPL string to parse and render
+ * @param width - Width of the canvas in pixels
+ * @param height - Height of the canvas in pixels
+ * @returns Promise resolving to array of PNG Buffers (one per label)
+ *
+ * @example
+ * import { parseAndRenderPNG } from "zplr/node";
+ * import fs from "fs/promises";
+ *
+ * const pngBuffers = await parseAndRenderPNG("^XA^FO100,100^FDHello^FS^XZ", 400, 600);
+ * await fs.writeFile("label.png", pngBuffers[0]);
+ */
+export async function parseAndRenderPNG(
+  zpl: string,
+  width: number,
+  height: number
+): Promise<Buffer[]> {
+  const canvases = await parseAndRender(zpl, width, height);
+  const buffers: Buffer[] = [];
+  
+  for (const canvas of canvases) {
+    const buffer = await canvas.toBuffer("png");
+    buffers.push(buffer);
+  }
+  
+  return buffers;
+}
+
 // Export types
 export type { CommandClass } from "./types/CommandClass";
 export type { Orientation } from "./types/Orientation";
