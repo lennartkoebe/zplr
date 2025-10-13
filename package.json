@@ -1,6 +1,6 @@
 {
   "name": "zplr",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "TypeScript library for parsing and rendering ZPL label files",
   "main": "./dist/index.node.js",
   "module": "./dist/index.node.js",
