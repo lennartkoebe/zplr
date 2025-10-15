@@ -1,8 +1,8 @@
-import { defineConfig } from "tsup";
+import { defineConfig } from "tsdown";
 
-export default defineConfig([
+export default [
   // Node.js build
-  {
+  defineConfig({
     entry: ["src/index.node.ts"],
     format: ["esm"],
     dts: true,
@@ -12,10 +12,9 @@ export default defineConfig([
     // Keep native modules external
     external: ["skia-canvas", "canvas"],
     target: "node18",
-    splitting: false,
-  },
+  }),
   // Web/Browser build
-  {
+  defineConfig({
     entry: ["src/index.web.ts"],
     format: ["esm"],
     dts: true,
@@ -23,8 +22,7 @@ export default defineConfig([
     sourcemap: true,
     platform: "browser",
     target: "es2020",
-    splitting: false,
     // Bundle all dependencies for the browser
     noExternal: ["qrcode", "jsbarcode"],
-  },
-]);
+  }),
+];
