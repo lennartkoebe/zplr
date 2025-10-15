@@ -10,7 +10,7 @@ export default [
     sourcemap: true,
     clean: true,
     // Keep native modules external
-    external: ["skia-canvas", "canvas"],
+    external: ["skia-canvas"],
     target: "node18",
   }),
   // Web/Browser build
