@@ -85,7 +85,14 @@ export class FieldSeparator implements CommandClass {
     context.ctx.fillStyle = "black";
     context.ctx.strokeStyle = "black";
     context.ctx.lineWidth = 1;
-    context.ctx.filter = "none";
-    context.ctx.globalCompositeOperation = "source-over";
+
+    // Reset field-level effects, but preserve label-level reverse print
+    if (context.labelReversePrint) {
+      context.ctx.filter = "invert(1)";
+      context.ctx.globalCompositeOperation = "difference";
+    } else {
+      context.ctx.filter = "none";
+      context.ctx.globalCompositeOperation = "source-over";
+    }
   }
 }

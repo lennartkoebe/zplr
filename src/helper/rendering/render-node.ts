@@ -42,6 +42,7 @@ export async function render(
     y: 0,
     fieldX: 0,
     fieldY: 0,
+    labelReversePrint: false,
     createCanvas,
     drawCanvasToCanvas,
   };

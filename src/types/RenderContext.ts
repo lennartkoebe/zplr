@@ -19,6 +19,7 @@ export interface RenderContext {
   charHeight: number;
   charWidth: number | undefined;
   rotation: number;
+  labelReversePrint: boolean;
   // Platform-specific canvas factory for creating temporary canvases
   createCanvas: (width?: number, height?: number) => any;
   // Platform-specific method to draw canvas to canvas

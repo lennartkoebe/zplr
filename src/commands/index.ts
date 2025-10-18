@@ -9,6 +9,7 @@ import { FieldOrigin } from "./FieldOrigin";
 import { FieldReversePrint } from "./FieldReversePrint";
 import { FieldSeparator } from "./FieldSeparator";
 import { GraphicBox } from "./GraphicBox";
+import { LabelReversePrint } from "./LabelReversePrint";
 
 export const AllCommands = [
   BarcodeFieldCode128,
@@ -22,6 +23,7 @@ export const AllCommands = [
   ChangeAlphaDefaultFont,
   GraphicBox,
   FieldBlock,
+  LabelReversePrint,
 ];
 export type Commands = (typeof AllCommands)[number]["command"];
 export type Command = InstanceType<(typeof AllCommands)[number]>;
