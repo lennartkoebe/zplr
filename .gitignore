@@ -12,9 +12,9 @@ coverage
 .nyc_output
 
 # Generated files
-*.png
-*.pdf
-*.svg
+/*.png
+/*.pdf
+/*.svg
 !examples/**/*.png
 !examples/**/*.pdf
 !examples/**/*.svg
