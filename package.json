@@ -42,6 +42,8 @@
   "author": "Lennart Kurth",
   "license": "MIT",
   "devDependencies": {
+    "@headlessui/vue": "^1.7.23",
+    "@iconify-prerendered/vue-mdi": "^0.28.1737398331",
     "@tailwindcss/postcss": "^4.1.14",
     "@types/node": "^22.18.10",
     "@vitejs/plugin-vue": "^6.0.1",

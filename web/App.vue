@@ -94,7 +94,7 @@
               class="font-medium space-x-2 text-sm/6 text-zinc-600 inline-flex items-center dark:text-zinc-300"
             >
               <span>v{{ currentPackageVersion }}</span>
-              <ChevronRightIcon
+              <IconChevronRight
                 class="text-zinc-400 size-5 dark:text-zinc-500"
                 aria-hidden="true"
               />
@@ -117,11 +117,13 @@
             class="rounded-md font-semibold bg-zinc-600 text-sm text-white py-2.5 px-3.5 shadow-2xs dark:bg-zinc-500 hover:bg-zinc-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-600 dark:hover:bg-zinc-400 dark:focus-visible:outline-zinc-500"
             >Get started</a
           >
-          <a
-            href="#"
-            class="font-semibold text-sm/6 text-zinc-900 dark:text-white"
-            >live editor <span aria-hidden="true">→</span></a
+          <button
+            @click="editorOpen = true"
+            class="rounded-full cursor-pointer flex font-semibold py-1 px-3 text-sm/6 text-zinc-900 items-center dark:text-white hover:bg-black/5"
           >
+            <IconTextBoxEdit class="mr-2 inline-block" />
+            live editor
+          </button>
         </div>
       </div>
       <div
@@ -131,350 +133,85 @@
           <img
             :src="renderedExampleBase64"
             alt="App screenshot"
+            @click="editorOpen = true"
             width="2432"
             height="1442"
-            class="bg-zinc-50 rounded-3xl shadow-xl w-120"
+            class="cursor-pointer bg-zinc-50 rounded-3xl shadow-xl w-120"
           />
         </div>
       </div>
     </div>
   </div>
-  <div class="bg-background min-h-screen">
-    <!-- Header -->
+  <TransitionRoot as="template" :show="editorOpen">
+    <Dialog class="z-10 relative" @close="editorOpen = false">
+      <div class="bg-black/5 inset-0 fixed" />
 
-    <!-- Main Content -->
-    <main class="container py-6">
-      <div class="grid gap-6 lg:grid-cols-2">
-        <!-- Editor Panel -->
-        <div class="space-y-6">
-          <div class="bg-card border rounded-lg shadow-xs text-card-foreground">
-            <div class="flex flex-col space-y-1.5 p-6 pb-4">
-              <h3 class="font-semibold leading-none tracking-tight text-2xl">
-                Editor
-              </h3>
-              <p class="text-sm text-muted-foreground">
-                Enter or select ZPL code to render
-              </p>
-            </div>
-            <div class="space-y-4 p-6 pt-0">
-              <!-- Example Templates -->
-              <div>
-                <label class="font-medium text-sm leading-none mb-2 block"
-                  >Quick Examples</label
-                >
-                <div class="flex flex-wrap gap-2">
-                  <button
-                    v-for="example in examples"
-                    :key="example.name"
-                    @click="loadExample(example)"
-                    class="rounded-md font-medium h-9 text-sm px-3 transition-colors inline-flex items-center justify-center focus-visible:outline-hidden focus-visible:ring-ring focus-visible:ring-2 disabled:opacity-50 disabled:pointer-events-none"
-                    :class="
-                      currentExample === example.name
-                        ? 'bg-primary text-primary-foreground hover:bg-primary/90'
-                        : 'border border-input bg-background hover:bg-accent hover:text-accent-foreground'
-                    "
-                  >
-                    <span class="mr-1.5">{{ example.icon }}</span>
-                    {{ example.name }}
-                  </button>
-                </div>
-              </div>
-
-              <!-- Code Editor -->
-              <div class="relative">
-                <textarea
-                  v-model="zplCode"
-                  @input="onCodeChange"
-                  class="bg-background border border-input rounded-md flex font-mono ring-offset-background text-sm min-h-[400px] w-full py-2 px-3 placeholder:text-muted-foreground resize-none focus-visible:outline-hidden focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  placeholder="Enter your ZPL code here..."
-                  spellcheck="false"
-                ></textarea>
+      <div class="inset-0 fixed overflow-hidden">
+        <div class="inset-0 absolute overflow-hidden">
+          <div
+            class="flex max-w-full pr-10 inset-y-0 left-0 pointer-events-none fixed sm:pr-16"
+          >
+            <TransitionChild
+              as="template"
+              enter="transform transition ease-in-out duration-500 sm:duration-700"
+              enter-from="-translate-x-full"
+              enter-to="translate-x-0"
+              leave="transform transition ease-in-out duration-500 sm:duration-700"
+              leave-from="translate-x-0"
+              leave-to="-translate-x-full"
+            >
+              <DialogPanel class="w-screen max-w-3xl pointer-events-auto">
                 <div
-                  class="flex space-x-2 right-3 bottom-3 absolute items-center"
+                  class="bg-white flex flex-col h-screen shadow-xl py-6 relative overflow-hidden dark:bg-gray-800"
                 >
-                  <span
-                    v-if="autoRender"
-                    class="bg-secondary rounded-md font-medium text-xs text-secondary-foreground py-1 px-2 inline-flex items-center"
-                  >
-                    Live Preview
-                  </span>
-                </div>
-              </div>
-
-              <!-- Controls -->
-              <div class="flex flex-wrap gap-2 items-center">
-                <button
-                  @click="renderZPL"
-                  :disabled="rendering"
-                  class="bg-primary rounded-md font-medium h-10 ring-offset-background text-sm text-primary-foreground py-2 px-4 transition-colors inline-flex items-center justify-center hover:bg-primary/90 focus-visible:outline-hidden focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none"
-                >
-                  <span v-if="!rendering" class="flex items-center">
-                    <svg
-                      class="h-4 mr-2 w-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M14 5l7 7m0 0l-7 7m7-7H3"
-                      />
-                    </svg>
-                    Render
-                  </span>
-                  <span v-else class="flex items-center">
-                    <svg
-                      class="h-4 mr-2 -ml-1 animate-spin w-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        class="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        stroke-width="4"
-                      ></circle>
-                      <path
-                        class="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
-                    </svg>
-                    Rendering...
-                  </span>
-                </button>
-
-                <button
-                  @click="clearCanvas"
-                  class="bg-background border border-input rounded-md font-medium h-10 ring-offset-background text-sm py-2 px-4 transition-colors inline-flex items-center justify-center hover:bg-accent hover:text-accent-foreground focus-visible:outline-hidden focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none"
-                >
-                  <svg
-                    class="h-4 mr-2 w-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                    />
-                  </svg>
-                  Clear
-                </button>
-
-                <label class="cursor-pointer flex space-x-2 items-center">
-                  <input
-                    v-model="autoRender"
-                    type="checkbox"
-                    class="border border-primary rounded-sm h-4 ring-offset-background w-4 peer shrink-0 focus-visible:outline-hidden focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  />
-                  <span
-                    class="font-medium text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    >Auto-render</span
-                  >
-                </label>
-              </div>
-
-              <!-- Canvas Size Controls -->
-              <div class="bg-muted border rounded-lg p-4">
-                <label class="font-medium text-sm leading-none mb-3 block"
-                  >Canvas Size</label
-                >
-                <div class="grid gap-4 grid-cols-2">
-                  <div class="space-y-2">
-                    <label class="text-xs text-muted-foreground"
-                      >Width (px)</label
-                    >
-                    <input
-                      v-model.number="canvasWidth"
-                      type="number"
-                      min="100"
-                      max="2000"
-                      step="50"
-                      class="bg-background border border-input rounded-md flex h-10 ring-offset-background text-sm w-full py-2 px-3 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground file:border-0 focus-visible:outline-hidden focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    />
-                  </div>
-                  <div class="space-y-2">
-                    <label class="text-xs text-muted-foreground"
-                      >Height (px)</label
-                    >
-                    <input
-                      v-model.number="canvasHeight"
-                      type="number"
-                      min="100"
-                      max="2000"
-                      step="50"
-                      class="bg-background border border-input rounded-md flex h-10 ring-offset-background text-sm w-full py-2 px-3 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground file:border-0 focus-visible:outline-hidden focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <!-- Messages -->
-              <div
-                v-if="error"
-                class="border rounded-lg bg-destructive/10 border-destructive/50 p-4"
-              >
-                <div class="flex gap-3 items-start">
-                  <svg
-                    class="h-5 mt-0.5 text-destructive w-5 shrink-0"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                  <p class="text-sm text-destructive">{{ error }}</p>
-                </div>
-              </div>
-
-              <div v-if="info" class="bg-muted border rounded-lg p-4">
-                <div class="flex gap-3 items-start">
-                  <svg
-                    class="h-5 mt-0.5 w-5 shrink-0"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                  <p class="text-sm">{{ info }}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Canvas Panel -->
-        <div class="space-y-6">
-          <div class="bg-card border rounded-lg shadow-xs text-card-foreground">
-            <div class="flex flex-col space-y-1.5 p-6 pb-4">
-              <div class="flex items-center justify-between">
-                <div>
-                  <h3
-                    class="font-semibold leading-none tracking-tight text-2xl"
-                  >
-                    Preview
-                  </h3>
-                  <p class="text-sm text-muted-foreground">
-                    Rendered ZPL output
-                  </p>
-                </div>
-                <button
-                  v-if="hasRendered"
-                  @click="downloadCanvas"
-                  class="bg-background border border-input rounded-md font-medium h-9 ring-offset-background text-sm py-2 px-4 transition-colors inline-flex items-center justify-center hover:bg-accent hover:text-accent-foreground focus-visible:outline-hidden focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none"
-                >
-                  <svg
-                    class="h-4 mr-2 w-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                    />
-                  </svg>
-                  Download PNG
-                </button>
-              </div>
-            </div>
-            <div class="p-6 pt-0">
-              <div
-                class="border rounded-md flex bg-muted/30 min-h-[600px] p-8 relative items-center justify-center"
-              >
-                <canvas
-                  ref="canvas"
-                  :width="canvasWidth"
-                  :height="canvasHeight"
-                  class="bg-white border rounded-md h-auto max-w-full shadow-xs"
-                  :class="{ 'opacity-50': rendering }"
-                ></canvas>
-
-                <div
-                  v-if="!hasRendered && !rendering"
-                  class="flex inset-0 absolute items-center justify-center"
-                >
-                  <div class="space-y-3 text-center">
-                    <svg
-                      class="mx-auto h-16 text-muted-foreground/40 w-16"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                      />
-                    </svg>
-                    <div class="space-y-1">
-                      <p class="font-medium text-sm text-muted-foreground">
-                        No preview yet
-                      </p>
-                      <p class="text-xs text-muted-foreground/60">
-                        Select an example or click Render
-                      </p>
+                  <div class="px-4 sm:px-6">
+                    <div class="flex items-start justify-between">
+                      <DialogTitle
+                        class="font-semibold text-base text-gray-900 dark:text-white"
+                      >
+                        Live Editor
+                      </DialogTitle>
+                      <div class="flex h-7 ml-3 items-center">
+                        <button
+                          type="button"
+                          class="rounded-md text-gray-400 relative hover:text-gray-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 dark:hover:text-white dark:focus-visible:outline-indigo-500"
+                          @click="editorOpen = false"
+                        >
+                          <span class="-inset-2.5 absolute" />
+                          <span class="sr-only">Close editor</span>
+                          <IconClose class="size-6" aria-hidden="true" />
+                        </button>
+                      </div>
                     </div>
                   </div>
+                  <div class="flex-1 mt-6 px-4 overflow-hidden sm:px-6">
+                    <textarea
+                      v-model="baseExample"
+                      class="rounded-md font-mono h-full outline-none bg-gray-100 text-sm w-full p-4 text-gray-900 resize-none dark:bg-gray-900 dark:text-gray-100"
+                    ></textarea>
+                  </div>
                 </div>
-              </div>
-
-              <div
-                v-if="renderTime && hasRendered"
-                class="border rounded-lg flex bg-muted/50 mt-4 p-3 items-center justify-between"
-              >
-                <div class="flex text-sm items-center">
-                  <svg
-                    class="h-4 mr-2 w-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                  <span class="font-medium">Rendered successfully</span>
-                </div>
-                <span class="font-mono text-xs text-muted-foreground"
-                  >{{ renderTime }}ms
-                </span>
-              </div>
-            </div>
+              </DialogPanel>
+            </TransitionChild>
           </div>
         </div>
       </div>
-    </main>
-  </div>
+    </Dialog>
+  </TransitionRoot>
 </template>
 <script setup lang="ts">
-import { ref, onMounted, watch, type Ref, watchEffect } from "vue";
-import { parse, parseAndRenderPNG, render } from "../src/index.web";
+import {
+  Dialog,
+  DialogPanel,
+  DialogTitle,
+  TransitionChild,
+  TransitionRoot,
+} from "@headlessui/vue";
+import { IconClose, IconTextBoxEdit } from "@iconify-prerendered/vue-mdi";
+import { ref, watchEffect } from "vue";
 import packageJSON from "../package.json";
+import { parseAndRenderPNG } from "../src/index.web";
+import { IconChevronRight } from "@iconify-prerendered/vue-mdi";
 
 const baseExample = ref(`^XA
 
@@ -561,183 +298,5 @@ watchEffect(async () => {
 
 const currentPackageVersion = packageJSON.version;
 
-// Types
-interface ZPLExample {
-  name: string;
-  icon: string;
-  code: string;
-}
-
-// State
-const zplCode: Ref<string> = ref("");
-const canvasWidth: Ref<number> = ref(400);
-const canvasHeight: Ref<number> = ref(600);
-const canvas: Ref<HTMLCanvasElement | null> = ref(null);
-const rendering: Ref<boolean> = ref(false);
-const error: Ref<string> = ref("");
-const info: Ref<string> = ref("");
-const hasRendered: Ref<boolean> = ref(false);
-const renderTime: Ref<number> = ref(0);
-const autoRender: Ref<boolean> = ref(true);
-const currentExample: Ref<string> = ref("");
-
-let renderTimeout: ReturnType<typeof setTimeout> | null = null;
-
-// Example ZPL codes
-const examples: ZPLExample[] = [
-  {
-    name: "Text",
-    icon: "📝",
-    code: `^XA
-^FO100,100^FDHello World^FS
-^FO100,150^FDThis is ZPL on the web!^FS
-^FO100,200^FDZPLr Library Demo^FS
-^XZ`,
-  },
-  {
-    name: "Graphics",
-    icon: "📦",
-    code: `^XA
-^FO50,50^GB300,200,5^FS
-^FO100,100^GC100,5^FS
-^FO180,130^FDBox & Circle^FS
-^XZ`,
-  },
-  {
-    name: "Label",
-    icon: "🏷️",
-    code: `^XA
-^FO50,50^GB350,500,3^FS
-^FO100,100^FDProduct Name^FS
-^FO100,150^FDPrice: $19.99^FS
-^FO100,200^FDSKU: 12345^FS
-^FO100,300^GB250,2,2^FS
-^FO100,350^FDMade with ZPLr^FS
-^XZ`,
-  },
-  {
-    name: "Barcode",
-    icon: "🔲",
-    code: `^XA
-^FO100,100^BCN,100,Y,N,N^FD123456^FS
-^FO100,250^FDBarcode: 123456^FS
-^XZ`,
-  },
-  {
-    name: "QR Code",
-    icon: "📱",
-    code: `^XA
-^FO150,150^BQN,2,4^FDHELLO WORLD^FS
-^FO150,350^FDQR Code Example^FS
-^XZ`,
-  },
-];
-
-// Load the first example on mount
-onMounted(() => {
-  loadExample(examples[0]);
-});
-
-// Watch for auto-render
-watch([zplCode, canvasWidth, canvasHeight], () => {
-  if (autoRender.value) {
-    // Debounce rendering
-    if (renderTimeout) {
-      clearTimeout(renderTimeout);
-    }
-    renderTimeout = setTimeout(() => {
-      renderZPL();
-    }, 500);
-  }
-});
-
-// Load example
-function loadExample(example: ZPLExample): void {
-  zplCode.value = example.code;
-  currentExample.value = example.name;
-  error.value = "";
-  info.value = "";
-  if (autoRender.value) {
-    renderZPL();
-  }
-}
-
-// Handle code change
-function onCodeChange(): void {
-  // Handled by watcher
-}
-
-// Render ZPL
-async function renderZPL(): Promise<void> {
-  if (!zplCode.value.trim()) {
-    error.value = "Please enter some ZPL code";
-    return;
-  }
-
-  rendering.value = true;
-  error.value = "";
-  info.value = "";
-
-  try {
-    const startTime = performance.now();
-
-    // Parse ZPL
-    const labels = parse(zplCode.value);
-
-    if (!labels || labels.length === 0) {
-      throw new Error("No labels parsed from ZPL code");
-    }
-
-    // Render to canvas
-    const renderedCanvas = await render(
-      labels[0],
-      canvasWidth.value,
-      canvasHeight.value
-    );
-
-    // Copy the rendered canvas to our display canvas
-    if (canvas.value && renderedCanvas) {
-      const ctx = canvas.value.getContext("2d");
-      if (ctx) {
-        ctx.clearRect(0, 0, canvas.value.width, canvas.value.height);
-        ctx.drawImage(renderedCanvas, 0, 0);
-      }
-    }
-
-    const endTime = performance.now();
-    renderTime.value = Math.round(endTime - startTime);
-
-    hasRendered.value = true;
-    info.value = `Successfully rendered ${labels[0].length} commands`;
-  } catch (err) {
-    console.error("Rendering error:", err);
-    error.value = (err as Error).message || "Failed to render ZPL";
-    hasRendered.value = false;
-  } finally {
-    rendering.value = false;
-  }
-}
-
-// Clear canvas
-function clearCanvas(): void {
-  const ctx = canvas.value?.getContext("2d");
-  if (ctx) {
-    ctx.fillStyle = "white";
-    ctx.fillRect(0, 0, canvasWidth.value, canvasHeight.value);
-  }
-  hasRendered.value = false;
-  info.value = "";
-  error.value = "";
-  renderTime.value = 0;
-}
-
-// Download canvas as PNG
-function downloadCanvas(): void {
-  if (!canvas.value) return;
-
-  const link = document.createElement("a");
-  link.download = "zpl-label.png";
-  link.href = canvas.value.toDataURL("image/png");
-  link.click();
-}
+const editorOpen = ref(false);
 </script>
