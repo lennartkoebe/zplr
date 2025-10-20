@@ -61,8 +61,10 @@
     "vue-tsc": "^3.1.1"
   },
   "dependencies": {
+    "@monaco-editor/loader": "^1.6.1",
     "@types/qrcode": "^1.5.5",
     "jsbarcode": "^3.12.1",
+    "monaco-editor": "^0.54.0",
     "qrcode": "^1.5.4"
   },
   "optionalDependencies": {

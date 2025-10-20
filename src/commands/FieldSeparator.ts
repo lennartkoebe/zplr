@@ -83,7 +83,8 @@ export class FieldSeparator implements CommandClass {
         const textHeight = context.charHeight;
         // Use the FieldData command index for text highlighting
         const commandIndex =
-          context.highlight.fieldDataCommandIndex ?? context.highlight.currentCommandIndex;
+          context.highlight.fieldDataCommandIndex ??
+          context.highlight.currentCommandIndex;
         context.highlight.regions.push({
           type: "text",
           commandIndex: commandIndex,

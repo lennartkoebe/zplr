@@ -188,15 +188,14 @@
                   </div>
                   <div class="flex-1 flex overflow-hidden">
                     <!-- Left side: Code Editor -->
-                    <div class="flex-1 flex flex-col px-4 py-4 overflow-hidden sm:px-6">
-                      <textarea
-                        ref="textareaRef"
+                    <div class="flex-1 flex flex-col overflow-hidden">
+                      <MonacoEditor
                         v-model="baseExample"
-                        @click="handleCursorChange"
-                        @keyup="handleCursorChange"
-                        @focus="handleCursorChange"
-                        class="rounded-md font-mono h-full outline-none bg-gray-100 text-sm w-full p-4 text-gray-900 resize-none dark:bg-gray-900 dark:text-gray-100"
-                      ></textarea>
+                        :cursor-position="editorCursorPosition"
+                        :highlight-range="highlightRange"
+                        @update:cursor-position="handleEditorCursorChange"
+                        class="h-full w-full"
+                      />
                     </div>
                     <!-- Right side: Canvas Preview -->
                     <div class="flex-1 flex flex-col px-4 py-4 overflow-auto sm:px-6 bg-gray-50 dark:bg-gray-900">
@@ -231,7 +230,7 @@ import {
   TransitionRoot,
 } from "@headlessui/vue";
 import { IconClose, IconTextBoxEdit } from "@iconify-prerendered/vue-mdi";
-import { ref, watchEffect } from "vue";
+import { ref, watch } from "vue";
 import packageJSON from "../package.json";
 import {
   parseAndRender,
@@ -242,6 +241,67 @@ import {
   parseAndRenderAdvanced
 } from "../src/index.web";
 import { IconChevronRight } from "@iconify-prerendered/vue-mdi";
+import MonacoEditor from "./components/MonacoEditor.vue";
+
+// Helper function to draw highlights on a canvas
+function drawHighlights(
+  ctx: CanvasRenderingContext2D,
+  regions: HighlightRegion[],
+  highlightedCommandIndex: number | undefined
+) {
+  if (highlightedCommandIndex === undefined) return;
+
+  for (const region of regions) {
+    if (region.commandIndex === highlightedCommandIndex) {
+      ctx.save();
+      ctx.fillStyle = "rgba(255, 165, 0, 0.3)";
+      ctx.strokeStyle = "rgba(255, 165, 0, 0.8)";
+      ctx.lineWidth = 2;
+
+      switch (region.type) {
+        case "box":
+          if (region.width && region.height) {
+            ctx.fillRect(region.x, region.y, region.width, region.height);
+            ctx.strokeRect(region.x, region.y, region.width, region.height);
+          }
+          break;
+        case "circle":
+          if (region.radius) {
+            ctx.beginPath();
+            ctx.arc(region.x, region.y, region.radius, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.stroke();
+          }
+          break;
+        case "barcode":
+        case "text":
+          if (region.width && region.height) {
+            ctx.fillRect(region.x, region.y, region.width, region.height);
+            ctx.strokeRect(region.x, region.y, region.width, region.height);
+          }
+          break;
+        case "origin":
+          // Draw crosshair at origin
+          const size = 20;
+          ctx.beginPath();
+          ctx.moveTo(region.x - size, region.y);
+          ctx.lineTo(region.x + size, region.y);
+          ctx.moveTo(region.x, region.y - size);
+          ctx.lineTo(region.x, region.y + size);
+          ctx.stroke();
+
+          // Draw circle at origin point
+          ctx.fillStyle = "rgba(255, 165, 0, 0.5)";
+          ctx.beginPath();
+          ctx.arc(region.x, region.y, 5, 0, 2 * Math.PI);
+          ctx.fill();
+          ctx.stroke();
+          break;
+      }
+      ctx.restore();
+    }
+  }
+}
 
 const baseExample = ref(`^XA
 
@@ -321,21 +381,39 @@ const baseExample = ref(`^XA
 
 const renderedExampleBase64 = ref<string>();
 const renderedExampleCanvas = ref<HTMLCanvasElement | null>(null);
+const baseCanvas = ref<HTMLCanvasElement | null>(null); // Cache base rendering
 const highlightRegions = ref<HighlightRegion[]>([]);
-const cursorPosition = ref<number>(0);
+const editorCursorPosition = ref<number>(0);
+const highlightRange = ref<{ start: number; end: number } | undefined>(undefined);
 const highlightedCommandIndex = ref<number | undefined>(undefined);
 const hoveredCommandIndex = ref<number | undefined>(undefined);
 const canvasCursor = ref<string>("default");
 const editorOpen = ref(false);
-const textareaRef = ref<HTMLTextAreaElement | null>(null);
 
-// Update cursor position and find highlighted command (from textarea)
-function handleCursorChange(event: Event) {
-  const target = event.target as HTMLTextAreaElement;
-  cursorPosition.value = target.selectionStart;
-  const commandIndex = findCommandAtPosition(baseExample.value, cursorPosition.value);
+// Update cursor position and find highlighted command (from editor)
+function handleEditorCursorChange(position: number) {
+  editorCursorPosition.value = position;
+  const commandIndex = findCommandAtPosition(baseExample.value, position);
   highlightedCommandIndex.value = commandIndex;
   hoveredCommandIndex.value = undefined; // Clear hover when editing
+  
+  // Update highlight range based on command
+  updateHighlightRange(commandIndex);
+}
+
+// Update highlight range for the Monaco Editor decoration
+function updateHighlightRange(commandIndex: number | undefined) {
+  if (commandIndex !== undefined) {
+    const commands = parse(baseExample.value)[0];
+    if (commands && commands[commandIndex]) {
+      const cmd = commands[commandIndex];
+      if (cmd.sourceStart !== undefined && cmd.sourceEnd !== undefined) {
+        highlightRange.value = { start: cmd.sourceStart, end: cmd.sourceEnd };
+        return;
+      }
+    }
+  }
+  highlightRange.value = undefined;
 }
 
 // Handle canvas mouse move (hover highlighting)
@@ -351,15 +429,25 @@ function handleCanvasMouseMove(event: MouseEvent) {
   const commandIndex = findCommandAtCoordinate(highlightRegions.value, x, y);
   hoveredCommandIndex.value = commandIndex;
   canvasCursor.value = commandIndex !== undefined ? "pointer" : "default";
+  
+  // Update highlight range when hovering
+  if (editorOpen.value) {
+    updateHighlightRange(commandIndex);
+  }
 }
 
 // Handle canvas mouse leave (clear hover)
 function handleCanvasMouseLeave() {
   hoveredCommandIndex.value = undefined;
   canvasCursor.value = "default";
+  
+  // Restore highlight to current cursor position when leaving canvas
+  if (editorOpen.value) {
+    updateHighlightRange(highlightedCommandIndex.value);
+  }
 }
 
-// Handle canvas click (select code in textarea)
+// Handle canvas click (select code in editor)
 function handleCanvasClick(event: MouseEvent) {
   if (!renderedExampleCanvas.value) {
     // If canvas not ready, just open the editor
@@ -373,8 +461,6 @@ function handleCanvasClick(event: MouseEvent) {
     return;
   }
   
-  if (!textareaRef.value) return;
-  
   const rect = (event.target as HTMLImageElement).getBoundingClientRect();
   const scaleX = renderedExampleCanvas.value.width / rect.width;
   const scaleY = renderedExampleCanvas.value.height / rect.height;
@@ -387,28 +473,65 @@ function handleCanvasClick(event: MouseEvent) {
     const commands = parse(baseExample.value)[0];
     if (commands && commands[commandIndex]) {
       const cmd = commands[commandIndex];
-      if (cmd.sourceStart !== undefined && cmd.sourceEnd !== undefined) {
-        // Select the command text in the textarea
-        textareaRef.value.focus();
-        textareaRef.value.setSelectionRange(cmd.sourceStart, cmd.sourceEnd);
+      if (cmd.sourceStart !== undefined) {
+        // Move cursor to the command position in the editor
+        editorCursorPosition.value = cmd.sourceStart;
         highlightedCommandIndex.value = commandIndex;
         hoveredCommandIndex.value = undefined;
+        
+        // Update highlight range
+        updateHighlightRange(commandIndex);
       }
     }
   }
 }
 
-// Render with highlighting
-watchEffect(async () => {
-  const activeHighlight = hoveredCommandIndex.value ?? highlightedCommandIndex.value;
-  const result = (await parseAndRenderAdvanced(baseExample.value, 610, 810, activeHighlight))[0];
+// Render base ZPL (without highlights) - only when code changes
+watch(
+  baseExample,
+  async () => {
+    const result = (await parseAndRenderAdvanced(baseExample.value, 610, 810))[0];
+    
+    if (result) {
+      baseCanvas.value = result.canvas;
+      highlightRegions.value = result.highlightRegions;
+      
+      // Trigger initial composite with current highlight
+      updateDisplayCanvas();
+    }
+  },
+  { immediate: true }
+);
+
+// Update display canvas with highlights - called when highlight changes
+function updateDisplayCanvas() {
+  if (!baseCanvas.value) return;
   
-  if (result) {
-    renderedExampleBase64.value = result.canvas.toDataURL("image/png");
-    renderedExampleCanvas.value = result.canvas;
-    highlightRegions.value = result.highlightRegions;
-    console.log("rerendered")
+  // Create or reuse display canvas
+  if (!renderedExampleCanvas.value) {
+    renderedExampleCanvas.value = document.createElement('canvas');
+    renderedExampleCanvas.value.width = baseCanvas.value.width;
+    renderedExampleCanvas.value.height = baseCanvas.value.height;
   }
+  
+  const ctx = renderedExampleCanvas.value.getContext('2d');
+  if (!ctx) return;
+  
+  // Clear and draw base canvas
+  ctx.clearRect(0, 0, renderedExampleCanvas.value.width, renderedExampleCanvas.value.height);
+  ctx.drawImage(baseCanvas.value, 0, 0);
+  
+  // Draw highlights on top
+  const activeHighlight = hoveredCommandIndex.value ?? highlightedCommandIndex.value;
+  drawHighlights(ctx, highlightRegions.value, activeHighlight);
+  
+  // Update data URL for display
+  renderedExampleBase64.value = renderedExampleCanvas.value.toDataURL("image/png");
+}
+
+// Watch for highlight changes and update display
+watch([hoveredCommandIndex, highlightedCommandIndex], () => {
+  updateDisplayCanvas();
 });
 
 const currentPackageVersion = packageJSON.version;

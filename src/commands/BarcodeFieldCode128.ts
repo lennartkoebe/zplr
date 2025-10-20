@@ -69,7 +69,8 @@ export class BarcodeFieldCode128 implements BarcodeCommand {
     );
 
     const commandIndex =
-      context.highlight.currentFieldStartIndex ?? context.highlight.currentCommandIndex;
+      context.highlight.currentFieldStartIndex ??
+      context.highlight.currentCommandIndex;
     context.highlight.regions.push({
       type: "barcode",
       commandIndex: commandIndex,
