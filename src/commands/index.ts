@@ -9,6 +9,7 @@ import { FieldOrigin } from "./FieldOrigin";
 import { FieldReversePrint } from "./FieldReversePrint";
 import { FieldSeparator } from "./FieldSeparator";
 import { GraphicBox } from "./GraphicBox";
+import { GraphicCircle } from "./GraphicCircle";
 import { LabelReversePrint } from "./LabelReversePrint";
 
 export const AllCommands = [
@@ -22,6 +23,7 @@ export const AllCommands = [
   FieldData,
   ChangeAlphaDefaultFont,
   GraphicBox,
+  GraphicCircle,
   FieldBlock,
   LabelReversePrint,
 ];

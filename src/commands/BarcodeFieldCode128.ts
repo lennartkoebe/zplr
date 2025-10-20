@@ -67,5 +67,16 @@ export class BarcodeFieldCode128 implements BarcodeCommand {
       context.fieldX,
       context.fieldY
     );
+
+    const commandIndex =
+      context.highlight.currentFieldStartIndex ?? context.highlight.currentCommandIndex;
+    context.highlight.regions.push({
+      type: "barcode",
+      commandIndex: commandIndex,
+      x: context.fieldX,
+      y: context.fieldY,
+      width: nextCanvas.width,
+      height: nextCanvas.height,
+    });
   }
 }

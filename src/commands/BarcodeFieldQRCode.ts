@@ -88,6 +88,17 @@ export class BarcodeFieldQRCode implements BarcodeCommand {
         context.fieldX,
         context.fieldY + 10
       );
+
+      const commandIndex =
+        context.highlight.currentFieldStartIndex ?? context.highlight.currentCommandIndex;
+      context.highlight.regions.push({
+        type: "barcode",
+        commandIndex: commandIndex,
+        x: context.fieldX,
+        y: context.fieldY + 10,
+        width: nextCanvas.width,
+        height: nextCanvas.height,
+      });
     } catch (error) {
       console.error("Failed to generate QR code:", error);
     }

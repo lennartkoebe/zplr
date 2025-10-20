@@ -63,5 +63,14 @@ export class GraphicCircle implements CommandClass {
     ctx.lineWidth *= 2;
     ctx.stroke();
     ctx.restore();
+
+    // Register bounding box for highlighting
+    context.highlight.regions.push({
+      type: "circle",
+      commandIndex: context.highlight.currentCommandIndex,
+      x: context.fieldX + radius,
+      y: context.fieldY + radius,
+      radius: radius,
+    });
   }
 }

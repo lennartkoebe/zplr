@@ -1,6 +1,36 @@
 import { BarcodeCommand } from "./CommandClass";
 import { FieldBlock } from "@/commands/FieldBlock";
 
+export type HighlightRegionType =
+  | "box"
+  | "circle"
+  | "barcode"
+  | "origin"
+  | "text";
+
+export interface HighlightRegion {
+  type: HighlightRegionType;
+  commandIndex: number; // Index of the command that created this region
+  x: number;
+  y: number;
+  width?: number;
+  height?: number;
+  radius?: number;
+}
+
+export interface HighlightTracking {
+  // The command index to highlight (if any)
+  highlightedCommandIndex?: number;
+  // The current command being processed
+  currentCommandIndex: number;
+  // Collection of all bounding boxes for interactive highlighting
+  regions: HighlightRegion[];
+  // Track the starting command index for the current field (FieldOrigin)
+  currentFieldStartIndex?: number;
+  // Track the command index of the FieldData command
+  fieldDataCommandIndex?: number;
+}
+
 export interface RenderContext {
   ctx: CanvasRenderingContext2D;
   x: number;
@@ -29,4 +59,6 @@ export interface RenderContext {
     x: number,
     y: number
   ) => void;
+  // Highlight tracking
+  highlight: HighlightTracking;
 }

@@ -16,6 +16,7 @@ export class FieldSeparator implements CommandClass {
 
   async applyToContext(context: RenderContext): Promise<void> {
     context.ctx.font = getFont(context);
+
     if (context.fieldData) {
       if (context.barcodeCommand) {
         await context.barcodeCommand.render(context);
@@ -27,6 +28,7 @@ export class FieldSeparator implements CommandClass {
 
         // Initialize starting x position
         let currX = context.fieldX;
+        let startX = context.fieldX;
         if (context.fieldBlock) {
           const textMetrics = context.ctx.measureText(text);
           const textWidth = textMetrics.width;
@@ -44,7 +46,9 @@ export class FieldSeparator implements CommandClass {
               currX = context.fieldX;
               break;
           }
+          startX = currX;
         }
+
         for (let letter of text) {
           let fontSize = context.charHeight * 0.75;
           if (context.fontKey === "0") {
@@ -74,14 +78,31 @@ export class FieldSeparator implements CommandClass {
           }
           // currX += context.ctx.measureText(letter).width * 1.05;
         }
+
+        const textWidth = currX - startX;
+        const textHeight = context.charHeight;
+        // Use the FieldData command index for text highlighting
+        const commandIndex =
+          context.highlight.fieldDataCommandIndex ?? context.highlight.currentCommandIndex;
+        context.highlight.regions.push({
+          type: "text",
+          commandIndex: commandIndex,
+          x: startX,
+          y: context.fieldY,
+          width: textWidth,
+          height: textHeight,
+        });
       }
     }
+
     // reset field
     context.fieldData = undefined;
     context.barcodeCommand = undefined;
     context.fieldBlock = new FieldBlock("");
     context.fieldX = 0;
     context.fieldY = 0;
+    context.highlight.currentFieldStartIndex = undefined;
+    context.highlight.fieldDataCommandIndex = undefined;
     context.ctx.fillStyle = "black";
     context.ctx.strokeStyle = "black";
     context.ctx.lineWidth = 1;

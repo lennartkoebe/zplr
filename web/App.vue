@@ -133,10 +133,12 @@
           <img
             :src="renderedExampleBase64"
             alt="App screenshot"
-            @click="editorOpen = true"
+            @click="handleCanvasClick"
+            @mousemove="handleCanvasMouseMove"
+            :style="{ cursor: canvasCursor }"
             width="2432"
             height="1442"
-            class="cursor-pointer bg-zinc-50 rounded-3xl shadow-xl w-120"
+            class="bg-zinc-50 rounded-3xl shadow-xl w-120"
           />
         </div>
       </div>
@@ -149,22 +151,22 @@
       <div class="inset-0 fixed overflow-hidden">
         <div class="inset-0 absolute overflow-hidden">
           <div
-            class="flex max-w-full pr-10 inset-y-0 left-0 pointer-events-none fixed sm:pr-16"
+            class="flex inset-0 pointer-events-none fixed"
           >
             <TransitionChild
               as="template"
               enter="transform transition ease-in-out duration-500 sm:duration-700"
-              enter-from="-translate-x-full"
-              enter-to="translate-x-0"
+              enter-from="opacity-0"
+              enter-to="opacity-100"
               leave="transform transition ease-in-out duration-500 sm:duration-700"
-              leave-from="translate-x-0"
-              leave-to="-translate-x-full"
+              leave-from="opacity-100"
+              leave-to="opacity-0"
             >
-              <DialogPanel class="w-screen max-w-3xl pointer-events-auto">
+              <DialogPanel class="w-screen h-screen pointer-events-auto">
                 <div
-                  class="bg-white flex flex-col h-screen shadow-xl py-6 relative overflow-hidden dark:bg-gray-800"
+                  class="bg-white flex flex-col h-screen shadow-xl relative overflow-hidden dark:bg-gray-800"
                 >
-                  <div class="px-4 sm:px-6">
+                  <div class="px-4 py-4 sm:px-6 border-b border-gray-200 dark:border-gray-700">
                     <div class="flex items-start justify-between">
                       <DialogTitle
                         class="font-semibold text-base text-gray-900 dark:text-white"
@@ -184,11 +186,32 @@
                       </div>
                     </div>
                   </div>
-                  <div class="flex-1 mt-6 px-4 overflow-hidden sm:px-6">
-                    <textarea
-                      v-model="baseExample"
-                      class="rounded-md font-mono h-full outline-none bg-gray-100 text-sm w-full p-4 text-gray-900 resize-none dark:bg-gray-900 dark:text-gray-100"
-                    ></textarea>
+                  <div class="flex-1 flex overflow-hidden">
+                    <!-- Left side: Code Editor -->
+                    <div class="flex-1 flex flex-col px-4 py-4 overflow-hidden sm:px-6">
+                      <textarea
+                        ref="textareaRef"
+                        v-model="baseExample"
+                        @click="handleCursorChange"
+                        @keyup="handleCursorChange"
+                        @focus="handleCursorChange"
+                        class="rounded-md font-mono h-full outline-none bg-gray-100 text-sm w-full p-4 text-gray-900 resize-none dark:bg-gray-900 dark:text-gray-100"
+                      ></textarea>
+                    </div>
+                    <!-- Right side: Canvas Preview -->
+                    <div class="flex-1 flex flex-col px-4 py-4 overflow-auto sm:px-6 bg-gray-50 dark:bg-gray-900">
+                      <div class="flex items-center justify-center h-full">
+                        <img
+                          :src="renderedExampleBase64"
+                          alt="ZPL Preview"
+                          @click="handleCanvasClick"
+                          @mousemove="handleCanvasMouseMove"
+                          @mouseleave="handleCanvasMouseLeave"
+                          :style="{ cursor: canvasCursor }"
+                          class="max-w-full max-h-full object-contain bg-white rounded-lg shadow-lg"
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
               </DialogPanel>
@@ -210,7 +233,14 @@ import {
 import { IconClose, IconTextBoxEdit } from "@iconify-prerendered/vue-mdi";
 import { ref, watchEffect } from "vue";
 import packageJSON from "../package.json";
-import { parseAndRenderPNG } from "../src/index.web";
+import {
+  parseAndRender,
+  findCommandAtPosition,
+  findCommandAtCoordinate,
+  parse,
+  type HighlightRegion,
+  parseAndRenderAdvanced
+} from "../src/index.web";
 import { IconChevronRight } from "@iconify-prerendered/vue-mdi";
 
 const baseExample = ref(`^XA
@@ -288,15 +318,98 @@ const baseExample = ref(`^XA
 ^FO60,740^FB489,1,0,R^FD02/01/2019^FS
 
 ^XZ`);
-const renderedExampleBase64 = ref<string>();
 
+const renderedExampleBase64 = ref<string>();
+const renderedExampleCanvas = ref<HTMLCanvasElement | null>(null);
+const highlightRegions = ref<HighlightRegion[]>([]);
+const cursorPosition = ref<number>(0);
+const highlightedCommandIndex = ref<number | undefined>(undefined);
+const hoveredCommandIndex = ref<number | undefined>(undefined);
+const canvasCursor = ref<string>("default");
+const editorOpen = ref(false);
+const textareaRef = ref<HTMLTextAreaElement | null>(null);
+
+// Update cursor position and find highlighted command (from textarea)
+function handleCursorChange(event: Event) {
+  const target = event.target as HTMLTextAreaElement;
+  cursorPosition.value = target.selectionStart;
+  const commandIndex = findCommandAtPosition(baseExample.value, cursorPosition.value);
+  highlightedCommandIndex.value = commandIndex;
+  hoveredCommandIndex.value = undefined; // Clear hover when editing
+}
+
+// Handle canvas mouse move (hover highlighting)
+function handleCanvasMouseMove(event: MouseEvent) {
+  if (!renderedExampleCanvas.value) return;
+  
+  const rect = (event.target as HTMLImageElement).getBoundingClientRect();
+  const scaleX = renderedExampleCanvas.value.width / rect.width;
+  const scaleY = renderedExampleCanvas.value.height / rect.height;
+  const x = (event.clientX - rect.left) * scaleX;
+  const y = (event.clientY - rect.top) * scaleY;
+  
+  const commandIndex = findCommandAtCoordinate(highlightRegions.value, x, y);
+  hoveredCommandIndex.value = commandIndex;
+  canvasCursor.value = commandIndex !== undefined ? "pointer" : "default";
+}
+
+// Handle canvas mouse leave (clear hover)
+function handleCanvasMouseLeave() {
+  hoveredCommandIndex.value = undefined;
+  canvasCursor.value = "default";
+}
+
+// Handle canvas click (select code in textarea)
+function handleCanvasClick(event: MouseEvent) {
+  if (!renderedExampleCanvas.value) {
+    // If canvas not ready, just open the editor
+    editorOpen.value = true;
+    return;
+  }
+  
+  if (!editorOpen.value) {
+    // If editor closed, open it
+    editorOpen.value = true;
+    return;
+  }
+  
+  if (!textareaRef.value) return;
+  
+  const rect = (event.target as HTMLImageElement).getBoundingClientRect();
+  const scaleX = renderedExampleCanvas.value.width / rect.width;
+  const scaleY = renderedExampleCanvas.value.height / rect.height;
+  const x = (event.clientX - rect.left) * scaleX;
+  const y = (event.clientY - rect.top) * scaleY;
+  
+  const commandIndex = findCommandAtCoordinate(highlightRegions.value, x, y);
+  
+  if (commandIndex !== undefined) {
+    const commands = parse(baseExample.value)[0];
+    if (commands && commands[commandIndex]) {
+      const cmd = commands[commandIndex];
+      if (cmd.sourceStart !== undefined && cmd.sourceEnd !== undefined) {
+        // Select the command text in the textarea
+        textareaRef.value.focus();
+        textareaRef.value.setSelectionRange(cmd.sourceStart, cmd.sourceEnd);
+        highlightedCommandIndex.value = commandIndex;
+        hoveredCommandIndex.value = undefined;
+      }
+    }
+  }
+}
+
+// Render with highlighting
 watchEffect(async () => {
-  renderedExampleBase64.value = (
-    await parseAndRenderPNG(baseExample.value, 610, 810)
-  )[0];
+  const activeHighlight = hoveredCommandIndex.value ?? highlightedCommandIndex.value;
+  const result = (await parseAndRenderAdvanced(baseExample.value, 610, 810, activeHighlight))[0];
+  
+  if (result) {
+    renderedExampleBase64.value = result.canvas.toDataURL("image/png");
+    renderedExampleCanvas.value = result.canvas;
+    highlightRegions.value = result.highlightRegions;
+    console.log("rerendered")
+  }
 });
 
 const currentPackageVersion = packageJSON.version;
-
-const editorOpen = ref(false);
 </script>

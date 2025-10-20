@@ -76,5 +76,15 @@ export class GraphicBox implements CommandClass {
     ctx.lineWidth *= 2;
     ctx.stroke();
     ctx.restore();
+
+    // Register bounding box for highlighting
+    context.highlight.regions.push({
+      type: "box",
+      commandIndex: context.highlight.currentCommandIndex,
+      x: context.fieldX,
+      y: context.fieldY,
+      width: this.width,
+      height: this.height,
+    });
   }
 }

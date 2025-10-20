@@ -45,6 +45,13 @@ export async function render(
     labelReversePrint: false,
     createCanvas,
     drawCanvasToCanvas,
+    highlight: {
+      highlightedCommandIndex: undefined,
+      currentCommandIndex: 0,
+      regions: [],
+      currentFieldStartIndex: undefined,
+      fieldDataCommandIndex: undefined,
+    },
   };
 
   ctx.fillStyle = "white";

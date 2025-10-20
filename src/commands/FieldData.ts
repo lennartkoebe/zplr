@@ -20,5 +20,7 @@ export class FieldData implements CommandClass {
 
   applyToContext(context: RenderContext): void {
     context.fieldData = this.data;
+    // Store the command index of the FieldData command for text highlighting
+    context.highlight.fieldDataCommandIndex = context.highlight.currentCommandIndex;
   }
 }
