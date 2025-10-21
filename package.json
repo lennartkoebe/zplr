@@ -44,11 +44,13 @@
   "devDependencies": {
     "@headlessui/vue": "^1.7.23",
     "@iconify-prerendered/vue-mdi": "^0.28.1737398331",
+    "@monaco-editor/loader": "^1.6.1",
     "@tailwindcss/postcss": "^4.1.14",
     "@types/node": "^22.18.10",
     "@vitejs/plugin-vue": "^6.0.1",
     "@vue/tsconfig": "^0.8.1",
     "esbuild-plugin-path-alias": "^1.0.7",
+    "monaco-editor": "^0.54.0",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.14",
     "tsdown": "^0.15.7",
@@ -61,10 +63,8 @@
     "vue-tsc": "^3.1.1"
   },
   "dependencies": {
-    "@monaco-editor/loader": "^1.6.1",
     "@types/qrcode": "^1.5.5",
     "jsbarcode": "^3.12.1",
-    "monaco-editor": "^0.54.0",
     "qrcode": "^1.5.4"
   },
   "optionalDependencies": {
