@@ -79,6 +79,7 @@ export function parse(zpl: string): CommandClass[][] {
 
   let commands: CommandClass[] = [];
   let label = zpl;
+  let currentPosition = 0; // Track position in original ZPL string
 
   while (label.length > 0) {
     const commandStart = skipToCommandStart(label, caretChar, tildeChar);
@@ -86,19 +87,32 @@ export function parse(zpl: string): CommandClass[][] {
       break;
     }
 
+    // Calculate position before this command
+    const skippedChars = label.length - commandStart.length;
+    currentPosition += skippedChars;
+
+    const sourceStart = currentPosition;
+
     const commandInfo = getCommandInfo(label, caretChar, tildeChar);
     if (!commandInfo) {
-      continue;
+      currentPosition += label.length;
+      break;
     }
     const commandName = commandInfo.name;
     const commandParamText = commandInfo.paramText;
 
+    // Calculate the full command length including marker and name
+    const commandLength = label.length - commandInfo.remaining.length;
+    const sourceEnd = currentPosition + commandLength;
+
     if (commandName === "CC") {
       caretChar = commandParamText[0] || "^";
       label = label.slice(4);
+      currentPosition += 4;
       continue;
     }
     label = commandInfo.remaining;
+    currentPosition = sourceEnd;
 
     if (commandName === "XA") {
       commands = [];
@@ -113,7 +127,12 @@ export function parse(zpl: string): CommandClass[][] {
     const commandClass = CommandMap[commandName];
 
     if (commandClass) {
-      commands.push(new commandClass(commandParamText));
+      const commandInstance = new commandClass(
+        commandParamText
+      ) as CommandClass;
+      commandInstance.sourceStart = sourceStart;
+      commandInstance.sourceEnd = sourceEnd;
+      commands.push(commandInstance);
     } else {
       console.warn(`Unknown command: ^${commandName}`);
     }

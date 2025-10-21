@@ -33,5 +33,16 @@ export class FieldOrigin implements CommandClass {
   applyToContext(context: RenderContext): void {
     context.fieldX = this.x;
     context.fieldY = this.y;
+
+    // Track this as the start of a new field
+    context.highlight.currentFieldStartIndex =
+      context.highlight.currentCommandIndex;
+
+    context.highlight.regions.push({
+      type: "origin",
+      commandIndex: context.highlight.currentCommandIndex,
+      x: this.x,
+      y: this.y,
+    });
   }
 }
