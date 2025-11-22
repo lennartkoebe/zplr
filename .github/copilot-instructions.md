@@ -4,6 +4,9 @@
 
 **ZPLr** is a TypeScript library for parsing and rendering ZPL label files. It's designed to work in both Node.js and web environments, converting ZPL strings into rendered canvas outputs.
 
+Basic information about ZPL implementation can be found in the `ZPLdocs.md` file in this repo.
+When implementing new commands always update the implementation status table in that document.
+
 ## Library Architecture
 
 This is a **library project** (not an application). The public API surface is:
