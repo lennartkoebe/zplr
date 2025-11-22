@@ -3,6 +3,8 @@ import { BarcodeFieldCode128 } from "./BarcodeFieldCode128";
 import { BarcodeFieldCode39 } from "./BarcodeFieldCode39";
 import { BarcodeFieldQRCode } from "./BarcodeFieldQRCode";
 import { ChangeAlphaDefaultFont } from "./ChangeAlphaDefaultFont";
+import { ChangeInternationalFont } from "./ChangeInternationalFont";
+import { Comment } from "./Comment";
 import { FieldBlock } from "./FieldBlock";
 import { FieldData } from "./FieldData";
 import { FieldOrigin } from "./FieldOrigin";
@@ -11,6 +13,7 @@ import { FieldSeparator } from "./FieldSeparator";
 import { GraphicBox } from "./GraphicBox";
 import { GraphicCircle } from "./GraphicCircle";
 import { LabelReversePrint } from "./LabelReversePrint";
+import { ScalableBitmappedFont } from "./ScalableBitmappedFont";
 
 export const AllCommands = [
   BarcodeFieldCode128,
@@ -22,10 +25,13 @@ export const AllCommands = [
   FieldOrigin,
   FieldData,
   ChangeAlphaDefaultFont,
+  ChangeInternationalFont,
+  Comment,
   GraphicBox,
   GraphicCircle,
   FieldBlock,
   LabelReversePrint,
+  ScalableBitmappedFont,
 ];
 export type Commands = (typeof AllCommands)[number]["command"];
 export type Command = InstanceType<(typeof AllCommands)[number]>;
